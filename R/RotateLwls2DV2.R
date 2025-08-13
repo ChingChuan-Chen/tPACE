@@ -15,7 +15,7 @@ RotateLwls2DV2 <- function(bw, kern='epan', xin, yin, win=NULL, xout) {
    xout =  matrix(c(xout,xout),ncol= 2)
   }
     
-  fit <- Rrotatedmullwlsk(bw, kern, t(xin), yin, win, t(xout), npoly=1, bwCheck=FALSE)
+  fit <- Rrotatedmullwlsk(bw, kern, t(xin), yin, win, t(xout))
   
   if (any(is.nan(fit)))
     stop('Something wrong with the rotate smoothed results')

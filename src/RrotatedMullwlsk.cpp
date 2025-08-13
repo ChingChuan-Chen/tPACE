@@ -3,20 +3,24 @@
 #include <string>       // to read in the kernel name
 #include <vector>       // to use vectors
 #include <algorithm>    // to get the intersect and sort
+#include <set>
 
 // [[Rcpp::depends(RcppEigen)]]
 // [[Rcpp::export]]
 
-Eigen::VectorXd Rrotatedmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const std::string kernel_type, const Eigen::Map<Eigen::MatrixXd> & tPairs, const Eigen::Map<Eigen::MatrixXd> & cxxn, const Eigen::Map<Eigen::VectorXd> & win,  const Eigen::Map<Eigen::MatrixXd> & xygrid, const unsigned int npoly, const bool & bwCheck){ 
+Eigen::VectorXd Rrotatedmullwlsk(
+    const Eigen::Map<Eigen::VectorXd> & bw, const std::string kernel_type, 
+    const Eigen::Map<Eigen::MatrixXd> & tPairs, const Eigen::Map<Eigen::MatrixXd> & cxxn, 
+    const Eigen::Map<Eigen::VectorXd> & win,  const Eigen::Map<Eigen::MatrixXd> & xygrid
+){ 
 
   // tPairs : xin (in MATLAB code)
   // cxxn : yin (in MATLAB code)
   // xygrid: d (in MATLAB code)
-  // npoly: redundant?
 
   const double invSqrt2pi=  1./(sqrt(2.*M_PI));
 
-  // Map the kernel name so we can use switches  
+  // Map the kernel name so we can use switches
   std::map<std::string,int> possibleKernels; 
   possibleKernels["epan"]    = 1;   possibleKernels["rect"]    = 2;
   possibleKernels["gauss"]   = 3;   possibleKernels["gausvar"] = 4; 
@@ -41,7 +45,7 @@ Eigen::VectorXd Rrotatedmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const 
   if ( !(win.all()) ){  // 
     Rcpp::Rcout << "Cases with zero-valued windows are not yet implemented" << std::endl;
     return (tPairs);
-  } 
+  }
 
   Eigen::Matrix2d RC;  // Rotation Coordinates
   RC << 1, -1, 1, 1; 
@@ -54,19 +58,22 @@ Eigen::VectorXd Rrotatedmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const 
   
   Eigen::VectorXd mu(xygridN);
   mu.setZero();     
+  
+  // add two bools to check if use SVD or LDLT (Cholesky)
+  bool check_rank = true, use_svd = false;
 
-  for (unsigned int i = 0; i !=  xygridN; ++i){   
+  for (unsigned int i = 0; i !=  xygridN; ++i){
 
     //locating local window (LOL) (bad joke)
     std::vector <unsigned int> indx; 
     //if the kernel is not Gaussian or Gaussian-like
-    if ( KernelName != 3 && KernelName != 4 ) { 
+    if ( KernelName != 3 && KernelName != 4 ) {
       //construct listX as vectors / size is unknown originally
-      std::vector <unsigned int> list1, list2; 
+      std::vector <unsigned int> list1, list2;
       for (unsigned int y = 0; y != tPairs.cols(); y++){ 
         if ( std::abs( rtPairs(0,y) - rxygrid(0,i) ) <= bw(0)  ) {
           list1.push_back(y);
-        }         
+        }
         if ( std::abs( rtPairs(1,y) - rxygrid(1,i) ) <= bw(1)  ) {
           list2.push_back(y);
         }
@@ -74,25 +81,43 @@ Eigen::VectorXd Rrotatedmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const 
       
     //get intersection between the two lists 
     std::set_intersection(list1.begin(), list1.begin() + list1.size(), list2.begin(), list2.begin() + list2.size(), std::back_inserter(indx));   
+      
+      
+      if (indx.size() < 3) {
+        check_rank = false; // Not enough points in the local window
+        use_svd = true; // Use SVD to solve the system
+      }
   
     } else { // just get the whole deal
       for (unsigned int y = 0; y != tPairs.cols(); ++y){
         indx.push_back(y);
       }
-    }   
+      check_rank = false;
+      use_svd = false;
+    } 
+    
+    if (indx.size() == 0) {
+      Rcpp::stop("No enough points in local window, please increase bandwidth."); 
+    }
 
     unsigned int indxSize = indx.size();
-    Eigen::VectorXd lw(indxSize);  
+    Eigen::VectorXd lw(indxSize);
     Eigen::VectorXd ly(indxSize);
     Eigen::MatrixXd lx(2,indxSize);
-    for (unsigned int u = 0; u !=indxSize; ++u){ 
+    for (unsigned int u = 0; u !=indxSize; ++u) {
       lx.col(u) = rtPairs.col(indx[u]); 
       lw(u) = win(indx[u]); 
       ly(u) = cxxn(indx[u]); 
     }
-
-
-    if (ly.size()>=npoly+1 && !bwCheck ){
+    
+    // check enough points are in the local window 
+    if (check_rank) {
+      std::set< std::pair<double, double> > unique_grid;
+      for (unsigned int u =0; u < indxSize; ++u) {
+        unique_grid.insert(std::make_pair(lx(0,u), lx(1,u)));
+      }
+      use_svd = (unique_grid.size() < 3) ? true : false;
+    }
 
       //computing weight matrix 
       Eigen::VectorXd temp(indxSize);
@@ -126,33 +151,26 @@ Eigen::VectorXd Rrotatedmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const 
                  ((1.-llx.row(0).array().pow(2)).array().pow(2)).array() *
                  ((1.-llx.row(1).array().pow(2)).array().pow(2)).array() * (225./256.);
           break;
-      } 
-      
+      }
+
       // make the design matrix
       Eigen::MatrixXd X(indxSize ,3);
       X.setOnes();    
       X.col(1) = (lx.row(0).array() - rxygrid(0,i)).array().pow(2);
       X.col(2) = (lx.row(1).array() - rxygrid(1,i)); 
-      Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() *X);
-      Eigen::VectorXd beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
-      mu(i)=beta(0); 
-    } else if ( ly.size() == 1 && !bwCheck) { // Why only one but not two is handled?
-      mu(i) = ly(0);
-    } else if ( ly.size() != 1 && (ly.size() < npoly+1) ) {
-      if ( bwCheck ){
-        Eigen::VectorXd checker(1); 
-        checker(0) = 0.; 
-        return(checker);
-      } else {  
-        Rcpp::stop("No enough points in local window, please increase bandwidth.");
+      
+      Eigen::VectorXd beta(3);
+      if (use_svd) {
+        Eigen::JacobiSVD<Eigen::MatrixXd> svd_XTWX(X.transpose() * temp.asDiagonal() * X, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        beta = svd_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+      } else {
+        Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() * X);
+        beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
       }
-    }
-  } 
-  
-  if (bwCheck){
-     Eigen::VectorXd checker(1); 
-     checker(0) = 1.; 
-     return(checker);
+      
+      // Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() *X);
+      // Eigen::VectorXd beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+      mu(i)=beta(0); 
   }
   
   return ( mu ); 

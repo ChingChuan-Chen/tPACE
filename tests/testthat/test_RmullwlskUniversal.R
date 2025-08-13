@@ -10,22 +10,18 @@ win <- rep(1,38)
 
 # These check out OK.
 U = test_that("basic inputs for different kernels match previous inputs.", { 
-
-  AA = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='epan',win=rep(1,38), bwCheck = FALSE)
+  AA = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='epan',win=rep(1,38))
   AAu = RmullwlskUniversal( bw = 2* IN$bw, tPairs =t(xin), cxxn=yin, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='epan', win=win, FALSE, TRUE) 
-   
-  BB = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='rect',win=rep(1,38), bwCheck = FALSE)
+
+  BB = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='rect',win=rep(1,38))
   BBu = RmullwlskUniversal( bw = 2* IN$bw, tPairs =t(xin), cxxn=yin, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='rect', win=win, FALSE, TRUE) 
-  
-  CC = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='gauss',win=rep(1,38), bwCheck = FALSE)
+
+  CC = Rmullwlsk(2* IN$bw,t(IN$tPairs),cxxn=IN$cxxn, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='gauss',win=rep(1,38))
   CCu = RmullwlskUniversal( bw = 2* IN$bw, tPairs =t(xin), cxxn=yin, xgrid=IN$regGrid, ygrid=IN$regGrid, kernel_type='gauss', win=win, FALSE, TRUE) 
-  
+
   expect_equal( CC, CCu)
   expect_equal( BB, BBu)
   expect_equal( AA, AAu)
-
-
-
 })
 
 

@@ -1,5 +1,5 @@
 # devtools::load_all()
-# setwd('misc/', bwCheck = FALSE) 
+# setwd('misc/') 
 
 library(Rcpp)
 
@@ -13,9 +13,9 @@ try( silent=TRUE, load(system.file('testdata', 'InputForRotatedMllwlskInCpp.RDat
 
 U = test_that("basic Epanetchnikov kernel inputs match MATLAB output for different bandwidths", { 
   
-  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel, bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel, bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel, bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel)
+  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel)
+  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= IN$kernel)
 
   expect_equal(sum(AA), -1.887451898050793, tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -3.264859562745997, tolerance = 1e-11,scale = 1)
@@ -24,9 +24,9 @@ U = test_that("basic Epanetchnikov kernel inputs match MATLAB output for differe
 
 V = test_that("basic rectangular kernel inputs match MATLAB output for different bandwidths", { 
 
-  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')
+  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')
+  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')
 
   expect_equal(sum(AA),  0.408929466844517, tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -1.803538175275243, tolerance = 1e-13,scale = 1)
@@ -36,9 +36,9 @@ V = test_that("basic rectangular kernel inputs match MATLAB output for different
 
 H = test_that("basic gaussian kernel inputs match MATLAB output for different bandwidths", {
 
-  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss', bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss', bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss', bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss')
+  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss')
+  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss')
 
   expect_equal(sum(AA), -4.197686977022681, tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -4.134314374205185, tolerance = 1e-14,scale = 1)
@@ -48,9 +48,9 @@ H = test_that("basic gaussian kernel inputs match MATLAB output for different ba
 
 Ft = test_that("basic quartic kernel inputs match MATLAB output for different bandwidths", {
 
-  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar', bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar', bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar', bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar')
+  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar')
+  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar')
 
   expect_equal(sum(AA), -3.753442160580053,tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -4.970567279909929, tolerance = 1e-13,scale = 1)
@@ -64,9 +64,9 @@ Ft = test_that("basic quartic kernel inputs match MATLAB output for different ba
 # These check out OK.
 G = test_that("basic gausvar kernel inputs match MATLAB output for different bandwidths", {
  
-  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar', bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar', bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar', bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =IN$bw, tPairs=IN$tPairs, cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar')
+  BB = Rrotatedmullwlsk(bw = c(3,4), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar')
+  CC = Rrotatedmullwlsk(bw = c(13,23.3), tPairs=(IN$tPairs), cxxn= IN$cxxn, win= IN$win, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar')
 
   expect_equal(sum(AA), -9.228691155965564, tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -3.594812776733668, tolerance = 1e-13,scale = 1)
@@ -77,11 +77,11 @@ G = test_that("basic gausvar kernel inputs match MATLAB output for different ban
 # These check out OK.
 S = test_that("strictly positive window weights inputs match MATLAB output for different bandwidths/kernels", {
 
-  AA = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar', bwCheck = FALSE)
-  BB = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss', bwCheck = FALSE)
-  CC = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE)
-  DD = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'epan', bwCheck = FALSE)
-  EE = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar', bwCheck = FALSE)
+  AA = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gausvar')
+  BB = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'gauss')
+  CC = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= seq(1,38)+0, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')
+  DD = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'epan')
+  EE = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'quar')
 
   expect_equal(sum(AA), -4.924560108566402, tolerance = 1e-13,scale = 1)
   expect_equal(sum(BB), -6.577000474589042, tolerance = 1e-13,scale = 1)
@@ -95,30 +95,28 @@ S = test_that("strictly positive window weights inputs match MATLAB output for d
 # These check out OK.
 Tt = test_that("incoherent kernel_types fall back to Epanechnikov kernels and give the proper warning msg.", {
 
-  DD = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'epan', bwCheck = FALSE)
-  dd = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'boom3', bwCheck = FALSE)
+  DD = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'epan')
+  dd = Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'boom3')
 
   expect_equal(sum(DD), sum(dd), tolerance = 1e-15, scale= 1)
-  expect_warning(  Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'boom3', bwCheck = FALSE), "Kernel_type argument was not set correctly; Epanechnikov kernel used.")
+  expect_warning(  Rrotatedmullwlsk(bw =c(3,4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'boom3'), "Kernel_type argument was not set correctly; Epanechnikov kernel used.")
 
 })
 
 
-Y = test_that("Small bandwidths give correct error", {
+# Y = test_that("Small bandwidths give correct error", {
 
-  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = TRUE)), 0)
-  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(9.3,9.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = TRUE)), 1)
+#  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 0)
+#  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(9.3,9.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 1)
   
-  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = 1)), 0)
-  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(9.3,9.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = 1)), 1)
+#  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 0)
+#  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(9.3,9.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 1)
   
- #  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = 0)), 0)
- #  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE)), 0)
+ #  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 0)
+ #  expect_equal( as.numeric( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect')), 0)
 
-  expect_error( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = FALSE), "No enough points in local window, please increase bandwidth.")
-  expect_error( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect', bwCheck = 0), "No enough points in local window, please increase bandwidth.")
+#  expect_error( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect'), "No enough points in local window, please increase bandwidth.")
+#  expect_error( Rrotatedmullwlsk(bw =c(0.3,0.4), tPairs=IN$tPairs, cxxn= IN$cxxn, win= sin(seq(1,38))+3, xygrid=IN$xygrid, npoly=IN$npoly, kernel_type= 'rect'), "No enough points in local window, please increase bandwidth.")
 
-
-
-})
+# })
 

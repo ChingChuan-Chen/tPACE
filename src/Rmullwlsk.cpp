@@ -8,13 +8,17 @@
 // [[Rcpp::export]]
 
 
-Eigen::MatrixXd Rmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const std::string kernel_type, const Eigen::Map<Eigen::MatrixXd> & tPairs, const Eigen::Map<Eigen::MatrixXd> & cxxn, const Eigen::Map<Eigen::VectorXd> & win,  const Eigen::Map<Eigen::VectorXd> & xgrid, const Eigen::Map<Eigen::VectorXd> & ygrid, const bool & bwCheck, const bool & transp = true){ 
+Eigen::MatrixXd Rmullwlsk( 
+    const Eigen::Map<Eigen::VectorXd> & bw, const std::string kernel_type, 
+    const Eigen::Map<Eigen::MatrixXd> & tPairs, const Eigen::Map<Eigen::MatrixXd> & cxxn, 
+    const Eigen::Map<Eigen::VectorXd> & win,  const Eigen::Map<Eigen::VectorXd> & xgrid, 
+    const Eigen::Map<Eigen::VectorXd> & ygrid, 
+    const bool & transp = true){ 
 
   // tPairs : xin (in MATLAB code)
   // cxxn : yin (in MATLAB code)
   // xgrid: out1 (in MATLAB code)
   // ygrid: out2 (in MATLAB code)
-  // bwCheck : boolean/ cause the function to simply run the bandwidth check.
 
   const double invSqrt2pi=  1./(sqrt(2.*M_PI));
 
@@ -52,27 +56,41 @@ Eigen::MatrixXd Rmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const std::st
   Eigen::MatrixXd mu(ygrid.size(),xgrid.size());
   mu.setZero();    
   const double bufSmall = 1.0e-6; // pow(double(10),-6);
+  
+  // add two bools to check if use SVD or LDLT (Cholesky)
+  bool check_rank = true, use_svd = false;
 
-  for (unsigned int i = 0; i != ygridN; ++i){  
-    for (unsigned int j = i; j < xgridN ; ++j){ 
+  for (unsigned int i = 0; i != ygridN; ++i){
+    for (unsigned int j = i; j < xgridN ; ++j){
 
       //locating local window (LOL) (bad joke)
       std::vector <unsigned int> indx; 
       //if the kernel is not Gaussian
-      if ( KernelName != 3) { 
+      if ( KernelName != 3) {
         //construct listX as vectors / size is unknown originally
         for (unsigned int y = 0; y != tPairs.cols(); y++){ 
           if ( std::abs( tPairs(0,y) - xgrid(j) ) <= (bw(0)+ bufSmall) && std::abs( tPairs(1,y) - ygrid(i) ) <= (bw(1)+ bufSmall) ) {
           // legacy MATLAB equivalent form :  
           // if ( (tPairs(0,y) >= (xgrid(j) -(bw(0)+ pow(double(10),-6)))) & (tPairs(0,y) <= (xgrid(j) + (bw(0)+  pow(double(10),-6))))) {
             indx.push_back(y);
-          }         
+          }
+        }
+        
+        if (indx.size() < 3) {
+          check_rank = false; // Not enough points in the local window
+          use_svd = true; // Use SVD to solve the system
         }
       } else{ // just get the whole deal
         for (unsigned int y = 0; y != tPairs.cols(); ++y){
           indx.push_back(y);
         }
-      }  
+        check_rank = false;
+        use_svd = false;
+      }
+      
+      if (indx.size() == 0) {
+        Rcpp::stop("No enough points in local window, please increase bandwidth."); 
+      }
 
       unsigned int indxSize = indx.size();
       Eigen::VectorXd lw(indxSize);  
@@ -84,22 +102,30 @@ Eigen::MatrixXd Rmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const std::st
         lw(u) = win(indx[u]); 
         ly(u) = cxxn(indx[u]); 
       }
+      
+      // check enough points are in the local window 
+      if (check_rank) {
+        std::set< std::pair<double, double> > unique_grid;
+        for (unsigned int u =0; u < indxSize; ++u) {
+          unique_grid.insert(std::make_pair(lx(0,u), lx(1,u)));
+        }
+        use_svd = (unique_grid.size() < 3) ? true : false;
+      }
 
       // check enough points are in the local window 
-      unsigned int meter=1;  
-      for (unsigned int u =0; u< indxSize; ++u) { 
-        for (unsigned int t = u + 1; t < indxSize; ++t) {
-          if ( (lx(0,u) !=  lx(0,t) ) || (lx(1,u) != lx(1,t) ) ) {
-            meter++;
-          }
-        }
-        if (meter >= 3) { 
-          break; 
-        }
-      }
+      // unsigned int meter=1;  
+      // for (unsigned int u =0; u< indxSize; ++u) { 
+      //   for (unsigned int t = u + 1; t < indxSize; ++t) {
+      //     if ( (lx(0,u) !=  lx(0,t) ) || (lx(1,u) != lx(1,t) ) ) {
+      //       meter++;
+      //     }
+      //   }
+      //   if (meter >= 3) { 
+      //     break; 
+      //   }
+      // }
    
       //computing weight matrix 
-      if (meter >=  3 && !bwCheck) { 
         Eigen::VectorXd temp(indxSize);
         Eigen::MatrixXd llx(2, indxSize );  
         llx.row(0) = (lx.row(0).array() - xgrid(j))/bw(0);  
@@ -139,29 +165,24 @@ Eigen::MatrixXd Rmullwlsk( const Eigen::Map<Eigen::VectorXd> & bw, const std::st
         X.setOnes();    
         X.col(1) = lx.row(0).array() - xgrid(j);
         X.col(2) = lx.row(1).array() - ygrid(i); 
-        Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() *X);
-        // The solver should stop if the value is NaN. See the HOLE example in gcvlwls2dV2.
-        Eigen::VectorXd beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
-        mu(i,j)=beta(0);  
-      } else if(meter < 3){
-        // Rcpp::Rcout <<"The meter value is:" << meter << std::endl;  
-        if (bwCheck) {
-            Eigen::MatrixXd checker(1,1);
-            checker(0,0) = 0.;
-            return(checker);
+        
+        Eigen::VectorXd beta(3);
+        if (use_svd) {
+          Eigen::JacobiSVD<Eigen::MatrixXd> svd_XTWX(X.transpose() * temp.asDiagonal() * X, Eigen::ComputeThinU | Eigen::ComputeThinV);
+          beta = svd_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
         } else {
-            Rcpp::stop("No enough points in local window, please increase bandwidth.");
+          Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() * X);
+          beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
         }
-      }
+        
+        // Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() *X);
+        // The solver should stop if the value is NaN. See the HOLE example in gcvlwls2dV2.
+        // Eigen::VectorXd beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+        mu(i,j)=beta(0);  
+      
     }
   }
 
-  if (bwCheck){
-     Eigen::MatrixXd checker(1,1); 
-     checker(0,0) = 1.; 
-     return(checker);
-  }
-    
   if (transp) {
   //  Eigen::MatrixXd result(ygrid.size(),xgrid.size());
   //  result = mu + mu.transpose();

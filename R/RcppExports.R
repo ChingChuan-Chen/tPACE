@@ -29,28 +29,28 @@ Rcppsort <- function(v) {
     .Call('_fdapace_Rcppsort', PACKAGE = 'fdapace', v)
 }
 
-Rmullwlsk <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck, transp = TRUE) {
-    .Call('_fdapace_Rmullwlsk', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck, transp)
+Rmullwlsk <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, transp = TRUE) {
+    .Call('_fdapace_Rmullwlsk', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, transp)
 }
 
-RmullwlskCC <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck) {
-    .Call('_fdapace_RmullwlskCC', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck)
+RmullwlskCC <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid) {
+    .Call('_fdapace_RmullwlskCC', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid)
 }
 
-RmullwlskCCsort2 <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck) {
-    .Call('_fdapace_RmullwlskCCsort2', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck)
+RmullwlskCCsort2 <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid) {
+    .Call('_fdapace_RmullwlskCCsort2', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid)
 }
 
-RmullwlskUniversal <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck, autoCov) {
-    .Call('_fdapace_RmullwlskUniversal', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, bwCheck, autoCov)
+RmullwlskUniversal <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, autoCov) {
+    .Call('_fdapace_RmullwlskUniversal', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, autoCov)
 }
 
-RmullwlskUniversalDeriv <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, npoly, nder1, nder2, bwCheck, autoCov) {
-    .Call('_fdapace_RmullwlskUniversalDeriv', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, npoly, nder1, nder2, bwCheck, autoCov)
+RmullwlskUniversalDeriv <- function(bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, npoly, nder1, nder2, autoCov) {
+    .Call('_fdapace_RmullwlskUniversalDeriv', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xgrid, ygrid, npoly, nder1, nder2, autoCov)
 }
 
-Rrotatedmullwlsk <- function(bw, kernel_type, tPairs, cxxn, win, xygrid, npoly, bwCheck) {
-    .Call('_fdapace_Rrotatedmullwlsk', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xygrid, npoly, bwCheck)
+Rrotatedmullwlsk <- function(bw, kernel_type, tPairs, cxxn, win, xygrid) {
+    .Call('_fdapace_Rrotatedmullwlsk', PACKAGE = 'fdapace', bw, kernel_type, tPairs, cxxn, win, xygrid)
 }
 
 #' Cumulative Trapezoid Rule Numerical Integration

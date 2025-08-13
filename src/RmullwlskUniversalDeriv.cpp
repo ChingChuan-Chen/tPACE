@@ -3,6 +3,8 @@
 #include <string>       // to read in the kernel name
 #include <vector>       // to use vectors
 #include <algorithm>    // to get the intersect, sort, lower_bound, upper_bound
+#include <set>          // to use set
+#include <utility>      // to use std::pair, std::make_pair
 // #include <gperftools/profiler.h>
 
 typedef std::pair<double, unsigned int> valIndPair;
@@ -28,14 +30,12 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
   const int & npoly,
   const int & nder1,
   const int & nder2,
-  const bool & bwCheck, 
   const bool & autoCov){ 
 // Assumes the first row of tPairs is sorted in increasing order.
   // tPairs : xin (in MATLAB code)
   // cxxn : yin (in MATLAB code)
   // xgrid: out1 (in MATLAB code)
   // ygrid: out2 (in MATLAB code)
-  // bwCheck : boolean / cause the function to simply run the bandwidth check. //To be depreciated
   // autoCov : boolean / cause the function to return the autocovariance.
 
   const double invSqrt2pi=  1./(sqrt(2.*M_PI));
@@ -90,10 +90,12 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
   const double* tDat = x1.data();
   
   Eigen::MatrixXd mu(xgrid.size(), ygrid.size());
-  mu.setZero();    
+  mu.setZero();
+  
+  // add two bools to check if use SVD or LDLT (Cholesky)
+  bool check_rank = true, use_svd = false;
 
-
-  for (unsigned int i = 0; i != xgridN; ++i) {  
+  for (unsigned int i = 0; i != xgridN; ++i) {
     const double xl = xgrid(i) - bw(0) - 1e-6, 
                  xu = xgrid(i) + bw(0) + 1e-6;
 
@@ -110,15 +112,15 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
     std::vector<valIndPair>::iterator ylIt = yval.begin(), 
                                       yuIt = yval.begin();
 
-    for (unsigned int j = (autoCov && isSymmetric)? i: 0; j != ygridN; ++j) { 
+    for (unsigned int j = (autoCov && isSymmetric)? i: 0; j != ygridN; ++j) {
       const double yl = ygrid(j) - bw(1) - 1e-6, 
                    yu = ygrid(j) + bw(1) + 1e-6;
 
       //locating local window (LOL) (bad joke)
-      std::vector <unsigned int> indx; 
+      std::vector <unsigned int> indx;
       
       //if the kernel is not Gaussian
-      if ( KernelName != 3) { 
+      if ( KernelName != 3) {
       // Search the lower and upper bounds increasingly.
         ylIt = std::lower_bound(ylIt, yval.end(), valIndPair(yl, 0), comparePair);
         yuIt = std::upper_bound(yuIt, yval.end(), valIndPair(yu, 0), comparePair);
@@ -132,11 +134,23 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
 
         for (std::vector<valIndPair>::iterator y = ylIt; y != yuIt; ++y){ 
           indx.push_back(y->second);
-        } 
+        }
+        
+        if (indx.size() < nXcols) {
+          check_rank = false; // Not enough points in the local window
+          use_svd = true; // Use SVD to solve the system
+        }
+        
       } else { //When we finally get c++11 we will use std::iota
         for( unsigned int y = 0; y != n; ++y){
           indx.push_back(y);
         }
+        check_rank = false;
+        use_svd = false;
+      }
+      
+      if (indx.size() == 0) {
+        Rcpp::stop("No enough points in local window, please increase bandwidth."); 
       }
 
       unsigned int indxSize = indx.size();
@@ -144,13 +158,22 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
       Eigen::VectorXd ly(indxSize);
       Eigen::MatrixXd lx(2,indxSize);
 
-      for (unsigned int u = 0; u !=indxSize; ++u){ 
-        lx.col(u) = tPairs.col(indx[u]); 
+      for (unsigned int u = 0; u !=indxSize; ++u){
+        lx.col(u) = tPairs.col(indx[u]);
         lw(u) = win(indx[u]); 
         ly(u) = cxxn(indx[u]); 
       }
 
       // check enough points are in the local window 
+      if (check_rank) {
+        std::set< std::pair<double, double> > unique_grid;
+        for (unsigned int u =0; u < indxSize; ++u) {
+          unique_grid.insert(std::make_pair(lx(0,u), lx(1,u)));
+        }
+        use_svd = (unique_grid.size() < nXcols) ? true : false;
+      }
+      
+      /* set will be more efficient
       unsigned int meter=1;  
       for (unsigned int u =0; u < indxSize; ++u) { 
         for (unsigned int t = u + 1; t < indxSize; ++t) {
@@ -162,9 +185,9 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
           break; 
         }
       }
+      */
     
-      //computing weight matrix 
-      if (meter >= nXcols && !bwCheck) { 
+      //computing weight matrix  
         Eigen::VectorXd temp(indxSize);
         Eigen::MatrixXd llx(2, indxSize );  
         llx.row(0) = (lx.row(0).array() - xgrid(i))/bw(0);  
@@ -212,24 +235,23 @@ Eigen::MatrixXd RmullwlskUniversalDeriv(
           }
         }
         
-        Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() * X);
-        Eigen::VectorXd beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+        Eigen::VectorXd beta(nXcols);
+        if (use_svd) {
+          Eigen::JacobiSVD<Eigen::MatrixXd> svd_XTWX(X.transpose() * temp.asDiagonal() * X, Eigen::ComputeThinU | Eigen::ComputeThinV);
+          beta = svd_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+        } else {
+          Eigen::LDLT<Eigen::MatrixXd> ldlt_XTWX(X.transpose() * temp.asDiagonal() * X);
+          beta = ldlt_XTWX.solve(X.transpose() * temp.asDiagonal() * ly);
+        }
         
         // Take the correct index and multiply by the factorial.
         // Rcpp::Rcout << npoly << ' ' << nder1 << ' ' << nder2 << '\n';
-        mu(i,j)=beta(nder * (nder + 1) / 2 + nder2) * factorial(nder1) * 
-                                                      factorial(nder2); 
-      } else if(meter < nXcols) {
-        Rcpp::stop("No enough points in local window, please increase bandwidth using userBwCov.");
-      }
+        mu(i,j)=beta(nder * (nder + 1) / 2 + nder2) * factorial(nder1) *factorial(nder2); 
+      } // else if(meter < nXcols) {
+        // Rcpp::stop("No enough points in local window, please increase bandwidth using userBwCov.");
+      // }
     }
-  }
 
-  if (bwCheck){
-     Eigen::MatrixXd checker(1,1); 
-     checker(0,0) = 1.; 
-     return(checker);
-  } 
   if (autoCov && isSymmetric){
     return (
       Eigen::MatrixXd(mu.triangularView<Eigen::StrictlyUpper>().transpose()) +
